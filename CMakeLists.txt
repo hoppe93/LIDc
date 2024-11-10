@@ -6,12 +6,18 @@ else ()
 	cmake_policy(VERSION 3.13)
 endif ()
 
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+set(POS_INDP_CODE ON)
+
 if (NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif ()
 
 # Declare project
 project(lid VERSION 1.0
+			DESCRIPTION "Line-integrated density synthetic diagnostic"
+			LANGUAGES CXX)
+project(lidx VERSION 1.0
 			DESCRIPTION "Line-integrated density synthetic diagnostic"
 			LANGUAGES CXX)
 
