@@ -3,7 +3,7 @@
 import liblid
 
 
-def integrate_dream(do, x0, nhat):
+def integrate_dream(do, x0, nhat, line_averaged=False):
     """
     Evaluate the line-integrated density for the given DREAMOutput object
     (or name of file containing DREAMOutput object).
@@ -13,9 +13,9 @@ def integrate_dream(do, x0, nhat):
     :param nhat: Coordinates of detector viewing direction.
     """
     if type(do) == str:
-        return liblid.integrate_dream_h5(do, x0, nhat)
+        t, n, L = liblid.integrate_dream_h5(do, x0, nhat)
     elif type(do) == dict:
-        return liblid.integrate_dream(do, x0, nhat)
+        t, n, L = liblid.integrate_dream(do, x0, nhat)
     else:   # Assume DREAMOutput
         d = {
             'grid': {
@@ -38,6 +38,11 @@ def integrate_dream(do, x0, nhat):
             }
         }
 
-        return liblid.integrate_dream(d, x0, nhat)
+        t, n, L = liblid.integrate_dream(d, x0, nhat)
+
+    if line_averaged:
+        return t, n/L
+    else:
+        return t, n
 
 

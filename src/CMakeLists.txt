@@ -48,6 +48,13 @@ if (Python3_FOUND)
 	target_link_libraries(lidx PUBLIC "${Python3_LIBRARIES}")
 endif (Python3_FOUND)
 
+# OpenMP
+find_package(OpenMP REQUIRED)
+if (OpenMP_CXX_FOUND)
+	target_link_libraries(lid PUBLIC OpenMP::OpenMP_CXX)
+	target_link_libraries(lidx PUBLIC OpenMP::OpenMP_CXX)
+endif (OpenMP_CXX_FOUND)
+
 # SOFTLib
 target_link_libraries(lid PUBLIC softlib)
 target_link_libraries(lidx PUBLIC softlib)

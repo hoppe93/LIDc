@@ -168,7 +168,8 @@ PyObject *lid_integrate_internal(
 	//////////////////////////////
 	/// Integrate density
 	//////////////////////////////
-	real_t *n = LID::line_integrated_density(dd, det);
+	real_t L;
+	real_t *n = LID::line_integrated_density(dd, det, &L);
 
 	npy_intp _dims = dd->nt;
 	PyObject *arr = PyArray_SimpleNew(1, &_dims, NPY_DOUBLE);
@@ -183,10 +184,12 @@ PyObject *lid_integrate_internal(
 		p[i] = n[i];
 		t[i] = dd->t[i];
 	}
+
+	PyObject *len = PyFloat_FromDouble(L);
 	
 	delete [] n;
 
-	return PyTuple_Pack(2, tarr, arr);
+	return PyTuple_Pack(3, tarr, arr, len);
 }
 
 extern "C" {

@@ -3,6 +3,8 @@
  */
 
 #include <cmath>
+#include <omp.h>
+#include <iostream>
 #include "config.hpp"
 #include "dreamoutput.hpp"
 #include "integrate.hpp"
@@ -10,6 +12,7 @@
 
 
 using namespace LID;
+using namespace std;
 
 
 /**
@@ -130,6 +133,13 @@ real_t integrate(
 
 	real_t n = 0;
 	real_t L = 0;
+	real_t minl = 10000, maxl = std::max(l11, l12);
+
+	if (l11 >= 0 && l11 < l12)
+		minl = l11;
+	else if (l12 >= 0)
+		minl = l12;
+
 	for (len_t ir = dd->nr; ir > 0; ir--) {
 		if (ir == 1)
 			l21 = -1, l22 = -1;
@@ -138,7 +148,7 @@ real_t integrate(
 
 		// Evaluate integral
 		// If the LOS does not intersect the inner flux-surface,
-		// this i where the LOS turns and we instead connect l11 -> l12.
+		// this is where the LOS turns and we instead connect l11 -> l12.
 		if (l21 < 0) {
 			n += dd->ne[it*nr + (ir-1)] * std::abs(l11-l12);
 			L += std::abs(l11-l12);
@@ -149,6 +159,12 @@ real_t integrate(
 
 		l11 = l21;
 		l12 = l22;
+
+		if (l11 >= 0 && l11 < minl) minl = l11;
+		if (l12 >= 0 && l12 < minl) minl = l12;
+
+		if (l11 >= 0 && l11 > maxl) maxl = l11;
+		if (l12 >= 0 && l12 > maxl) maxl = l12;
 	}
 
 	// If requested, return length of LOS
@@ -164,13 +180,19 @@ real_t integrate(
  * DREAM output struct.
  */
 real_t *line_integrated_density(
-	struct dream_data *dd, struct detector *det
+	struct dream_data *dd, struct detector *det,
+	real_t *length
 ) {
 	real_t *nlin = new real_t[dd->nt];
+	real_t L = 0;
 
+	#pragma omp parallel for shared(nlin,L) 
 	for (len_t i = 0; i < dd->nt; i++) {
-		nlin[i] = integrate(i, dd, det->x0, det->nhat);
+		nlin[i] = integrate(i, dd, det->x0, det->nhat, &L);
 	}
+
+	if (length != nullptr)
+		*length = L;
 
 	return nlin;
 }
