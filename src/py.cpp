@@ -240,10 +240,10 @@ static PyObject *lid_integrate_dream(
 	len_t ntheta;
 	PyObject *eq = PyDict_GetItemString(grid, "eq");
 	
-	dd->ROverR0   = lid_load_array_from_dict(eq, "ROverR0", &ntheta, &nr);
-	dd->ROverR0_f = lid_load_array_from_dict(eq, "ROverR0_f", &ntheta, &nr_f);
-	dd->Z         = lid_load_array_from_dict(eq, "Z", &ntheta, &nr);
-	dd->Z_f       = lid_load_array_from_dict(eq, "Z_f", &ntheta, &nr_f);
+	dd->RMinusR0   = lid_load_array_from_dict(eq, "RMinusR0", &ntheta, &nr);
+	dd->RMinusR0_f = lid_load_array_from_dict(eq, "RMinusR0_f", &ntheta, &nr_f);
+	dd->ZMinusZ0   = lid_load_array_from_dict(eq, "ZMinusZ0", &ntheta, &nr);
+	dd->ZMinusZ0_f = lid_load_array_from_dict(eq, "ZMinusZ0_f", &ntheta, &nr_f);
 
 	lid_load_list_from_dict(eq, "theta", &ntheta);
 	dd->ntheta = ntheta;

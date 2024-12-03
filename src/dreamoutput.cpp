@@ -27,14 +27,15 @@ struct dream_data *LID::load_dream_output(const char *filename) {
 	dd->r_f = sf->GetList("/grid/r_f", &nr_f);
 	dd->dr = sf->GetList("/grid/dr", &nr);
 	dd->R0 = sf->GetScalar("/grid/R0");
+	dd->Z0 = sf->GetScalar("/grid/eq/Z0");
 	dd->nr = nr;
 
 	// Flux surfaces
 	sfilesize_t eqdims[2], eqdims_f[2], ndim;
-	dd->ROverR0 = sf->GetMultiArray_linear("/grid/eq/ROverR0", 2, ndim, eqdims);
-	dd->ROverR0_f = sf->GetMultiArray_linear("/grid/eq/ROverR0_f", 2, ndim, eqdims_f);
-	dd->Z = sf->GetMultiArray_linear("/grid/eq/Z", 2, ndim, eqdims);
-	dd->Z_f = sf->GetMultiArray_linear("/grid/eq/Z_f", 2, ndim, eqdims_f);
+	dd->RMinusR0 = sf->GetMultiArray_linear("/grid/eq/RMinusR0", 2, ndim, eqdims);
+	dd->RMinusR0_f = sf->GetMultiArray_linear("/grid/eq/RMinusR0_f", 2, ndim, eqdims_f);
+	dd->ZMinusZ0 = sf->GetMultiArray_linear("/grid/eq/ZMinusZ0", 2, ndim, eqdims);
+	dd->ZMinusZ0_f = sf->GetMultiArray_linear("/grid/eq/ZMinusZ0_f", 2, ndim, eqdims_f);
 
 	sfilesize_t ntheta;
 	sf->GetList("/grid/eq/theta", &ntheta);

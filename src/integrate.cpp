@@ -72,9 +72,10 @@ void find_intersections(
 	len_t isurf, struct dream_data *dd, real_t detX0[3], real_t nhat[3],
 	real_t *l1, real_t *l2
 ) {
-	real_t *R = dd->ROverR0_f;
-	real_t *Z = dd->Z_f;
+	real_t *R = dd->RMinusR0_f;
+	real_t *Z = dd->ZMinusZ0_f;
 	real_t R0 = dd->R0;
+	real_t Z0 = dd->Z0;
 	const len_t nr = dd->nr;
 
 	len_t n = 0;
@@ -84,16 +85,16 @@ void find_intersections(
 	// have been located; this is the maximum number of possible
 	// intersections)
 	for (len_t i = 0; i < dd->ntheta && n < 2; i++) {
-		real_t x0 = R[i*(nr+1) + isurf] * R0;
-		real_t z0 = Z[i*(nr+1) + isurf];
+		real_t x0 = R[i*(nr+1) + isurf] + R0;
+		real_t z0 = Z[i*(nr+1) + isurf] + Z0;
 
 		real_t x1, z1;
 		if (i == dd->ntheta-1) {
-			x1 = R[0*(nr+1) + isurf] * R0;
-			z1 = Z[0*(nr+1) + isurf];
+			x1 = R[0*(nr+1) + isurf] + R0;
+			z1 = Z[0*(nr+1) + isurf] + Z0;
 		} else {
-			x1 = R[(i+1)*(nr+1) + isurf] * R0;
-			z1 = Z[(i+1)*(nr+1) + isurf];
+			x1 = R[(i+1)*(nr+1) + isurf] + R0;
+			z1 = Z[(i+1)*(nr+1) + isurf] + Z0;
 		}
 
 		real_t _l1, _l2;

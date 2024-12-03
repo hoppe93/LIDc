@@ -10,10 +10,10 @@ namespace LID {
 		len_t nt, nr, ntheta;
 		real_t *t, *r, *r_f;
 		real_t *dr;
-		real_t R0;
+		real_t R0, Z0;
 		// Flux surfaces (ntheta x nr)
-		real_t *ROverR0, *ROverR0_f;
-		real_t *Z, *Z_f;
+		real_t *RMinusR0, *RMinusR0_f;
+		real_t *ZMinusZ0, *ZMinusZ0_f;
 		// Electron density (nt x nr)
 		real_t *ne;
 	};

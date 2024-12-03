@@ -23,14 +23,15 @@ def integrate_dream(do, x0, nhat, line_averaged=False):
                 'r': do.grid.r[:],
                 'r_f': do.grid.r_f[:],
                 'dr': do.grid.dr[:],
-                'R0': do.grid.R0[:],
+                'R0': do.grid.eq.R0[:],
+                'Z0': do.grid.eq.Z0[:],
                 # eq
                 'eq': {
-                    'ROverR0': do.grid.eq.ROverR0[:],
-                    'ROverR0_f': do.grid.eq.ROverR0_f[:],
-                    'Z': do.grid.eq.Z[:],
-                    'Z_f': do.grid.eq.Z_f[:],
-                    'theta': do.grid.theta[:]
+                    'RMinusR0': do.grid.eq.RMinusR0[:],
+                    'RMinusR0_f': do.grid.eq.RMinusR0_f[:],
+                    'ZMinusZ0': do.grid.eq.ZMinusZ0[:],
+                    'ZMinusZ0_f': do.grid.eq.ZMinusZ0_f[:],
+                    'theta': do.grid.eq.theta[:]
                 }
             },
             'eqsys': {
