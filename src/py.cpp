@@ -233,8 +233,11 @@ static PyObject *lid_integrate_dream(
 
 	len_t _n;
 	real_t *R0 = lid_load_list_from_dict(grid, "R0", &_n);
+	real_t *Z0 = lid_load_list_from_dict(grid, "Z0", &_n);
 	dd->R0 = R0[0];
+	dd->Z0 = Z0[0];
 	delete [] R0;
+	delete [] Z0;
 
 	// Flux surfaces
 	len_t ntheta;
