@@ -257,11 +257,6 @@ static PyObject *lid_integrate_dream(
 		return NULL;
 	}
 
-	if (time_obj == Py_None)
-		printf("time_obj is None\n");
-	else
-		printf("time_obj is NOT None\n");
-
 	//////////////////////
 	/// Load DREAMOutput
 	//////////////////////
