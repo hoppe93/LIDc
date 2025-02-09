@@ -216,6 +216,12 @@ PyObject *lid_integrate_internal(
 			n = LID::line_integrated_density_at_time(
 				time, dd, det, &L
 			);
+		} else {
+			PyErr_SetString(
+				PyExc_RuntimeError,
+				"Invalid type for input argument 'time'."
+			);
+			return NULL;
 		}
 
 		npy_intp _dims = 1;
