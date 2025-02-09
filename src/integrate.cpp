@@ -197,5 +197,58 @@ real_t *line_integrated_density(
 
 	return nlin;
 }
+
+/**
+ * Find the time index of the time closest to the specified time.
+ */
+len_t find_time(
+	real_t time, struct dream_data *dd
+) {
+	// Locate time index
+	len_t it = 0, nt = dd->nt-1;
+
+	// Handle edge cases
+	if (time >= dd->t[nt])
+		it = nt;
+	else if (time <= dd->t[it])
+		nt = it;
+
+	// Bisection
+	while (it != nt) {
+		if ((it+1) == nt) {
+			if (std::abs(time - dd->t[it]) > std::abs(dd->t[nt] - time))
+				it = nt;
+			break;
+		}
+
+		len_t a = (it+nt)/2;
+		if (dd->t[a] <= time)
+			it = a;
+		else if (dd->t[a] >= time)
+			nt = a;
+	}
+
+	// Find the best matching time
+	if ((it+1) < dd->nt && (std::abs(time - dd->t[it]) > std::abs(dd->t[it+1] - time)))
+		it += 1;
+
+	return it;
+}
+
+/**
+ * Calculate the line-integrated electron density at the given time.
+ */
+real_t line_integrated_density_at_time(
+	len_t time, struct dream_data *dd, struct detector *det,
+	real_t *length
+) {
+	real_t L = 0;
+	real_t n = integrate(time, dd, det->x0, det->nhat, &L);
+
+	if (length != nullptr)
+		*length = L;
+	
+	return n;
+}
 }
 

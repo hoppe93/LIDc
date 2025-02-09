@@ -137,7 +137,8 @@ real_t *lid_load_array_from_dict(
  * Internal integration routine.
  */
 PyObject *lid_integrate_internal(
-	struct LID::dream_data *dd, PyObject *x0_obj, PyObject *nhat_obj
+	struct LID::dream_data *dd, PyObject *x0_obj, PyObject *nhat_obj,
+	PyObject *time_obj
 ) {
 	//////////////////////////////
 	/// Load detector settings
@@ -169,27 +170,70 @@ PyObject *lid_integrate_internal(
 	/// Integrate density
 	//////////////////////////////
 	real_t L;
-	real_t *n = LID::line_integrated_density(dd, det, &L);
+	if (time_obj == Py_None) {
+		real_t *n = LID::line_integrated_density(dd, det, &L);
 
-	npy_intp _dims = dd->nt;
-	PyObject *arr = PyArray_SimpleNew(1, &_dims, NPY_DOUBLE);
-	PyObject *tarr = PyArray_SimpleNew(1, &_dims, NPY_DOUBLE);
-	real_t *p = reinterpret_cast<real_t*>(
-		PyArray_DATA(reinterpret_cast<PyArrayObject*>(arr))
-	);
-	real_t *t = reinterpret_cast<real_t*>(
-		PyArray_DATA(reinterpret_cast<PyArrayObject*>(tarr))
-	);
-	for (npy_intp i = 0; i < _dims; i++) {
-		p[i] = n[i];
-		t[i] = dd->t[i];
+		npy_intp _dims = dd->nt;
+		PyObject *arr = PyArray_SimpleNew(1, &_dims, NPY_DOUBLE);
+		PyObject *tarr = PyArray_SimpleNew(1, &_dims, NPY_DOUBLE);
+		real_t *p = reinterpret_cast<real_t*>(
+			PyArray_DATA(reinterpret_cast<PyArrayObject*>(arr))
+		);
+		real_t *t = reinterpret_cast<real_t*>(
+			PyArray_DATA(reinterpret_cast<PyArrayObject*>(tarr))
+		);
+		for (npy_intp i = 0; i < _dims; i++) {
+			p[i] = n[i];
+			t[i] = dd->t[i];
+		}
+
+		PyObject *len = PyFloat_FromDouble(L);
+		
+		delete [] n;
+
+		return PyTuple_Pack(3, tarr, arr, len);
+	} else {
+		real_t t, n;
+		if (PyFloat_Check(time_obj)) {
+			real_t time = PyFloat_AsDouble(time_obj);
+			len_t idx = LID::find_time(time, dd);
+
+			t = dd->t[idx];
+			n = LID::line_integrated_density_at_time(
+				idx, dd, det, &L
+			);
+		} else if (PyLong_Check(time_obj)) {
+			len_t time = PyLong_AsLong(time_obj);
+			if (time >= dd->nt) {
+				PyErr_SetString(
+					PyExc_RuntimeError,
+					"The specified time index exceeds the size of the time grid."
+				);
+				return NULL;
+			}
+
+			t = dd->t[time];
+			n = LID::line_integrated_density_at_time(
+				time, dd, det, &L
+			);
+		}
+
+		npy_intp _dims = 1;
+		PyObject *tarr = PyArray_SimpleNew(1, &_dims, NPY_DOUBLE);
+		PyObject *narr = PyArray_SimpleNew(1, &_dims, NPY_DOUBLE);
+		real_t *_t = reinterpret_cast<real_t*>(
+			PyArray_DATA(reinterpret_cast<PyArrayObject*>(tarr))
+		);
+		real_t *_n = reinterpret_cast<real_t*>(
+			PyArray_DATA(reinterpret_cast<PyArrayObject*>(narr))
+		);
+
+		_t[0] = t;
+		_n[0] = n;
+		PyObject *len = PyFloat_FromDouble(L);
+
+		return PyTuple_Pack(3, tarr, narr, len);
 	}
-
-	PyObject *len = PyFloat_FromDouble(L);
-	
-	delete [] n;
-
-	return PyTuple_Pack(3, tarr, arr, len);
 }
 
 extern "C" {
@@ -200,11 +244,11 @@ extern "C" {
 static PyObject *lid_integrate_dream(
 	PyObject*, PyObject *args, PyObject *kwargs
 ) {
-	static const char *kwlist[] = {"do", "x0", "nhat", NULL};
-	PyObject *do_dict, *x0_obj, *nhat_obj;
+	static const char *kwlist[] = {"do", "x0", "nhat", "time", NULL};
+	PyObject *do_dict, *x0_obj, *nhat_obj, *time_obj=Py_None;
 	if (!PyArg_ParseTupleAndKeywords(
-		args, kwargs, "OOO", const_cast<char**>(kwlist),
-		&do_dict, &x0_obj, &nhat_obj)
+		args, kwargs, "OOO|O", const_cast<char**>(kwlist),
+		&do_dict, &x0_obj, &nhat_obj, &time_obj)
 	) {
 		PyErr_SetString(
 			PyExc_RuntimeError,
@@ -212,6 +256,11 @@ static PyObject *lid_integrate_dream(
 		);
 		return NULL;
 	}
+
+	if (time_obj == Py_None)
+		printf("time_obj is None\n");
+	else
+		printf("time_obj is NOT None\n");
 
 	//////////////////////
 	/// Load DREAMOutput
@@ -259,7 +308,7 @@ static PyObject *lid_integrate_dream(
 	Py_DECREF(eq);
 	Py_DECREF(grid);
 
-	return lid_integrate_internal(dd, x0_obj, nhat_obj);
+	return lid_integrate_internal(dd, x0_obj, nhat_obj, time_obj);
 }
 
 
@@ -270,13 +319,13 @@ static PyObject *lid_integrate_dream(
 static PyObject *lid_integrate_dream_h5(
 	PyObject*, PyObject *args, PyObject *kwargs
 ) {
-	static const char *kwlist[] = {"filename", "x0", "nhat", NULL};
-	PyObject *x0_obj, *nhat_obj;
+	static const char *kwlist[] = {"filename", "x0", "nhat", "time", NULL};
+	PyObject *x0_obj, *nhat_obj, *time_obj = Py_None;
 	const char *filename;
 
 	if (!PyArg_ParseTupleAndKeywords(
-		args, kwargs, "sOO", const_cast<char**>(kwlist),
-		&filename, &x0_obj, &nhat_obj)
+		args, kwargs, "sOO|O", const_cast<char**>(kwlist),
+		&filename, &x0_obj, &nhat_obj, &time_obj)
 	) {
 		PyErr_SetString(
 			PyExc_RuntimeError,
@@ -288,7 +337,7 @@ static PyObject *lid_integrate_dream_h5(
 	struct LID::dream_data *dd = LID::load_dream_output(filename);
 
 	// Do integration
-	return lid_integrate_internal(dd, x0_obj, nhat_obj);
+	return lid_integrate_internal(dd, x0_obj, nhat_obj, time_obj);
 }
 
 }

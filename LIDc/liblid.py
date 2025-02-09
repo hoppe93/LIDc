@@ -3,19 +3,21 @@
 import liblid
 
 
-def integrate_dream(do, x0, nhat, line_averaged=False):
+def integrate_dream(do, x0, nhat, time=None, line_averaged=False):
     """
     Evaluate the line-integrated density for the given DREAMOutput object
     (or name of file containing DREAMOutput object).
 
-    :param do:   DREAMOutput object or name of HDF5 file containing DREAMOutput object.
-    :param x0:   Coordinates of the detector origin.
-    :param nhat: Coordinates of detector viewing direction.
+    :param do:            DREAMOutput object or name of HDF5 file containing DREAMOutput object.
+    :param x0:            Coordinates of the detector origin.
+    :param nhat:          Coordinates of detector viewing direction.
+    :param time:          Time point for which to evaluate the line-integrated density.
+    :param line_averaged: Return the line-averaged density instead of the line-integrated density.
     """
     if type(do) == str:
-        t, n, L = liblid.integrate_dream_h5(do, x0, nhat)
+        t, n, L = liblid.integrate_dream_h5(do, x0, nhat, time)
     elif type(do) == dict:
-        t, n, L = liblid.integrate_dream(do, x0, nhat)
+        t, n, L = liblid.integrate_dream(do, x0, nhat, time)
     else:   # Assume DREAMOutput
         d = {
             'grid': {
@@ -39,7 +41,7 @@ def integrate_dream(do, x0, nhat, line_averaged=False):
             }
         }
 
-        t, n, L = liblid.integrate_dream(d, x0, nhat)
+        t, n, L = liblid.integrate_dream(d, x0, nhat, time)
 
     if line_averaged:
         return t, n/L

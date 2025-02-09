@@ -15,6 +15,8 @@ namespace LID {
 	};
 
 	real_t *line_integrated_density(struct dream_data*, struct detector*, real_t *L=nullptr);
+	real_t line_integrated_density_at_time(len_t, struct dream_data*, struct detector*, real_t *L=nullptr);
+	len_t find_time(real_t, struct dream_data*);
 }
 
 #endif/*_LID_INTEGRATE_HPP*/
