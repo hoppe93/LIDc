@@ -8,6 +8,15 @@ Despite not being parallelized (yet), this tool is several orders of magnitude
 faster than the Python tool.
 
 
+## Compiling
+This tool is written in both C++ and Python and must therefore be compiled
+before use. To compile, the following commands should be sufficient:
+```bash
+mkdir build && cd build && cmake .. && make
+```
+On certain systems, additional flags may be needed by CMake.
+
+
 ## Usage
 The Python code below illustrates how to use the synthetic diagnostic framework:
 ```python
