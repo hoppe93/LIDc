@@ -27,6 +27,7 @@ const static int numpy_initialized = init_numpy();
 static PyMethodDef lidMethods[] = {
 	{"integrate_dream", (PyCFunction)(void(*)(void))lid_integrate_dream, METH_VARARGS | METH_KEYWORDS, "Calculates the line-integrated density for the given DREAMOutput object."},
 	{"integrate_dream_h5", (PyCFunction)(void(*)(void))lid_integrate_dream_h5, METH_VARARGS | METH_KEYWORDS, "Calculates the line-integrated density for the given DREAMOutput object."},
+	{"greens_function", (PyCFunction)(void(*)(void))lid_greens_function, METH_VARARGS | METH_KEYWORDS, "Evaluates the Green's function for the given equilibrium and line-of-sight configuration."},
 	{NULL, NULL, 0, NULL}
 };
 
@@ -153,7 +154,7 @@ PyObject *lid_integrate_internal(
 		return NULL;
 	}
 	real_t *nhat = lid_load_list(nhat_obj, &n3);
-	if (x0 == nullptr) {
+	if (nhat == nullptr) {
 		PyErr_SetString(
 			PyExc_RuntimeError,
 			"Invalid type for input argument 'nhat'."
@@ -240,6 +241,66 @@ PyObject *lid_integrate_internal(
 
 		return PyTuple_Pack(3, tarr, narr, len);
 	}
+}
+
+
+/**
+ * Internal Green's function evaluation routine.
+ */
+PyObject *lid_greens_function_internal(
+	struct LID::dream_data *dd, PyArrayObject *x0s_obj, PyArrayObject *nhats_obj
+) {
+	//////////////////////////////
+	/// Load detector settings
+	//////////////////////////////
+	len_t n1, n2;
+	real_t *x0s = lid_load_array(x0s_obj, &n1, &n2);
+	if (x0s == nullptr) {
+		PyErr_SetString(
+			PyExc_RuntimeError,
+			"Invalid type for input argument 'x0s'."
+		);
+		return NULL;
+	}
+	real_t *nhats = lid_load_array(nhats_obj, &n1, &n2);
+	if (nhats == nullptr) {
+		PyErr_SetString(
+			PyExc_RuntimeError,
+			"Invalid type for input argument 'nhats'."
+		);
+		return NULL;
+	}
+
+	real_t **_x0s = new real_t*[n1], **_nhats = new real_t*[n1];
+	_x0s[0] = x0s;
+	_nhats[0] = nhats;
+	for (len_t i = 1; i < n1; i++) {
+		_x0s[i] = _x0s[i-1]+n2;
+		_nhats[i] = _nhats[i-1]+n2;
+	}
+
+	real_t *G = LID::greens_function(dd, n1, _x0s, _nhats);
+
+	npy_intp _dims[2] = {(npy_intp)n1, (npy_intp)dd->nr};
+	PyObject *arr = PyArray_SimpleNew(2, _dims, NPY_DOUBLE);
+	real_t *_G = reinterpret_cast<real_t*>(
+		PyArray_DATA(reinterpret_cast<PyArrayObject*>(arr))
+	);
+	for (npy_intp i = 0; i < (npy_intp)(n1*dd->nr); i++)
+		_G[i] = G[i];
+
+	npy_intp _dims2 = dd->nr;
+	PyObject *rarr = PyArray_SimpleNew(1, &_dims2, NPY_DOUBLE);
+	real_t *_r = reinterpret_cast<real_t*>(
+		PyArray_DATA(reinterpret_cast<PyArrayObject*>(rarr))
+	);
+	for (npy_intp i = 0; i < (npy_intp)dd->nr; i++)
+		_r[i] = dd->r[i];
+
+	delete [] G;
+
+	//return arr;
+	return PyTuple_Pack(2, rarr, arr);
 }
 
 extern "C" {
@@ -339,6 +400,38 @@ static PyObject *lid_integrate_dream_h5(
 
 	// Do integration
 	return lid_integrate_internal(dd, x0_obj, nhat_obj, time_obj);
+}
+
+
+/**
+ * Calculate the Green's function for the given LUKE equilibrium file.
+ */
+static PyObject *lid_greens_function(
+	PyObject*, PyObject *args, PyObject *kwargs
+) {
+	static const char *kwlist[] = {"filename", "x0s", "nhats", NULL};
+	PyObject *x0s_obj, *nhats_obj;
+	const char *filename;
+
+	if (!PyArg_ParseTupleAndKeywords(
+		args, kwargs, "sOO", const_cast<char**>(kwlist),
+		&filename, &x0s_obj, &nhats_obj)
+	) {
+		PyErr_SetString(
+			PyExc_RuntimeError,
+			"The arguments to 'greens_function()' must be Python dictionaries."
+		);
+		return NULL;
+	}
+
+	struct LID::dream_data *dd = LID::load_luke_equilibrium(filename);
+
+	// Do calculation
+	return lid_greens_function_internal(
+		dd,
+		reinterpret_cast<PyArrayObject*>(x0s_obj),
+		reinterpret_cast<PyArrayObject*>(nhats_obj)
+	);
 }
 
 }

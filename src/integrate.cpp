@@ -122,7 +122,8 @@ void find_intersections(
  */
 real_t integrate(
 	len_t it, struct dream_data *dd,
-	real_t x0[3], real_t nhat[3], real_t *length=nullptr
+	real_t x0[3], real_t nhat[3], real_t *length=nullptr,
+	real_t *greensfunction=nullptr
 ) {
 	const len_t nr = dd->nr;
 	real_t l11, l12, l21, l22;
@@ -140,7 +141,7 @@ real_t integrate(
 		minl = l11;
 	else if (l12 >= 0)
 		minl = l12;
-
+	
 	for (len_t ir = dd->nr; ir > 0; ir--) {
 		if (ir == 1)
 			l21 = -1, l22 = -1;
@@ -153,9 +154,13 @@ real_t integrate(
 		if (l21 < 0) {
 			n += dd->ne[it*nr + (ir-1)] * std::abs(l11-l12);
 			L += std::abs(l11-l12);
+			if (greensfunction != nullptr)
+				greensfunction[ir-1] = std::abs(l11-l12);
 		} else {
 			n += dd->ne[it*nr + (ir-1)] * (std::abs(l11-l21) + std::abs(l12-l22));
 			L += std::abs(l11-l21) + std::abs(l12-l22);
+			if (greensfunction != nullptr)
+				greensfunction[ir-1] = (std::abs(l11-l21) + std::abs(l12-l22));
 		}
 
 		l11 = l21;
@@ -173,6 +178,28 @@ real_t integrate(
 		*length = L;
 
 	return n;
+}
+
+
+/**
+ * Generate the Green's function for the given equilibrium
+ * and lines-of-sight.
+ */
+real_t *greens_function(
+	struct dream_data *dd, const len_t nlos,
+	real_t **x0s, real_t **nhats
+) {
+	real_t *G = new real_t[nlos * dd->nr];
+
+	// Initialize to zero
+	for (len_t i = 0; i < nlos*dd->nr; i++)
+		G[i] = 0;
+	
+	// Construct Green's function
+	for (len_t il = 0; il < nlos; il++)
+		integrate(0, dd, x0s[il], nhats[il], nullptr, G+il*dd->nr);
+	
+	return G;
 }
 
 

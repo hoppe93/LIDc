@@ -19,6 +19,7 @@ namespace LID {
 	};
 
 	struct dream_data *load_dream_output(const char *filename);
+	struct dream_data *load_luke_equilibrium(const char *filename);
 }
 
 #endif/*_LID_DREAM_OUTPUT_HPP*/

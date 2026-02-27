@@ -49,3 +49,14 @@ def integrate_dream(do, x0, nhat, time=None, line_averaged=False):
         return t, n
 
 
+def greens_function(filename, x0s, nhats):
+    """
+    Evaluate the Green's function for equilibrium in the given LUKE equilibrium
+    (or object), and the given lines-of-sight.
+
+    :param filename:      Name of file containing LUKE equilibrium to use.
+    :param x0s:           Coordinates of the detector origin.
+    :param nhats:         Coordinates of detector viewing direction.
+    """
+    return liblid.greens_function(filename, x0s, nhats)
+
